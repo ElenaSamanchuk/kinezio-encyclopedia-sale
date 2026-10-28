@@ -92,7 +92,7 @@ def strip_tracking(html):
     # Рассрочка Т-Банка грузится синхронно и из некоторых сетей отвечает 30 с; в превью не нужна
     html = html.replace('<script src="https://forma.tinkoff.ru/static/onlineScriptTilda.js"></script>', "")
     # GTM и статистика Тильды — чтобы просмотры превью не попадали в аналитику Kinezio
-    html = re.sub(r"<script>[^<]*googletagmanager\.com/gtm\.js[\s\S]*?</script>", "", html)
+    html = re.sub(r"<script[^>]*>[^<]*googletagmanager\.com/gtm\.js[\s\S]*?</script>", "", html)
     html = re.sub(r"<noscript><iframe[^>]*googletagmanager[^>]*></iframe></noscript>", "", html)
     html = re.sub(r'<script src="https://static\.tildacdn\.com/js/tilda-events-[^"]*"[^>]*></script>', "", html)
     return html.replace("<head>", '<head><meta name="robots" content="noindex,nofollow">', 1)
