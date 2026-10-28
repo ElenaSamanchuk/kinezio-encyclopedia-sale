@@ -9,7 +9,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "source-live-2026-10-28.html"
 
 OLD_END = "1788469199000"            # 03.09.2026 23:59:59 МСК
-START_MS = 1793257200000             # 29.10.2026 10:00:00 МСК
+START_MS = 1793264400000             # 29.10.2026 12:00:00 МСК
 END_MS = 1793480399000               # 31.10.2026 23:59:59 МСК
 DATE_RE = re.compile(r"3([\s ])сентября")
 
@@ -78,7 +78,7 @@ def script(b, start=START_MS, end=END_MS):
 
 
 new = {"1": kin["1"], "3": markup(kin["3"]), "4": markup(kin["4"]), "5": script(kin["5"])}
-stamp = "2026-10-28 · акция 29.10 10:00 – 31.10 23:59"
+stamp = "2026-10-28 · акция 29.10 12:00 – 31.10 23:59"
 names = {"1": "блок-1-стили", "3": "блок-3-разметка-1440", "4": "блок-4-разметка-430", "5": "блок-5-скрипт"}
 for n, body in new.items():
     body = body.replace("· 2026-09-08 -->", f"· {stamp} -->")
@@ -104,7 +104,7 @@ def build(kind):
              "function(t){t.setAttribute('data-kin-countdown',String(Date.now()+60000));});</script>") + s
     elif kind == "after":    # акция закончилась
         s = script(kin["5"], start=0, end=1)
-    elif kind == "before":   # до старта 29.10 10:00 (реальный код из tilda/)
+    elif kind == "before":   # до старта 29.10 12:00 (реальный код из tilda/)
         s = script(kin["5"])
     p = p.replace(kin["5"], s)
     p = strip_tracking(p)
@@ -112,7 +112,7 @@ def build(kind):
         "sale": "Превью: скидка идёт, таймер до 31.10 23:59",
         "switch": "Превью: таймер 60 секунд, затем страница сама переключится",
         "after": "Превью: акция закончилась (так будет с 01.11)",
-        "before": "Превью: до старта акции (сегодня и завтра до 10:00)",
+        "before": "Превью: до старта акции (сегодня и завтра до 12:00)",
     }[kind]
     bar = ('<div style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#14161a;color:#fff;'
            'font:600 13px/1.3 system-ui,sans-serif;padding:8px 12px;text-align:center">'
