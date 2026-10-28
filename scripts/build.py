@@ -19,7 +19,28 @@ kin = {n: b for b in blocks for n in "1345" if f"блок {n}/5" in b}
 assert set(kin) == set("1345"), kin.keys()
 
 
+CHECKOUT = "https://lk.kineziofitness.online/payments/tariff_nwn1gA/checkout"
+SUPPORT = "tg://resolve?domain=KINEZIOFITNESSCARE"
+NB = "\u00a0"
+CLIENT_NOTE_NEW = f"Если вы{NB}уже{NB}покупали продукты KINEZIO, цена 4{NB}990{NB}₽ применится при{NB}оплате автоматически"
+
+
+def client_card(b):
+    """Клиентам в акцию: зачёркнуто 5 990, кнопка «Купить» на ту же оплату.
+    После акции всё возвращается: зачёркнуто 14 990, «Написать в поддержку»."""
+    b, n1 = re.subn(r'(<p class="[^"]*line-through decoration-solid")>14[\s\u00a0]990 ₽(</p><span[^>]*>Скидка для)',
+                    r'\1 data-kin-after="14 990 ₽">5 990 ₽\2', b)
+    b, n2 = re.subn(r'(<p class="[^"]*")>(Если вы[^<]*поддержку)',
+                    lambda m: f'{m.group(1)} data-kin-after="{m.group(2)}">{CLIENT_NOTE_NEW}', b)
+    b, n3 = re.subn(r'<a href="' + re.escape(SUPPORT) + r'"([^>]*)>Написать в\u00a0поддержку</a>',
+                    lambda m: f'<a data-kin-after="Написать в{NB}поддержку" data-kin-after-href="{SUPPORT}" '
+                              f'href="{CHECKOUT}"{m.group(1)}>Купить</a>', b)
+    assert (n1, n2, n3) == (1, 1, 1), (n1, n2, n3)
+    return b
+
+
 def markup(b):
+    b = client_card(b)
     b = b.replace(f'data-kin-countdown="{OLD_END}"', f'data-kin-countdown="{END_MS}"')
     b = DATE_RE.sub(lambda m: f"31{m.group(1)}октября", b)
     assert "сентябр" not in b
@@ -37,7 +58,10 @@ def script(b, start=START_MS, end=END_MS):
     b = b.replace("if(Date.now()>SALE_END_MS)saleOver();",
                   "if(Date.now()>SALE_END_MS||Date.now()<SALE_START_MS)saleOver();")
     b = b.replace("else setTimeout(saleOver,", "else if(Date.now()<SALE_END_MS)setTimeout(saleOver,")
-    assert "SALE_START_MS" in b and str(end) in b
+    b = b.replace("[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')",
+                  "[].forEach.call(wrap.querySelectorAll('[data-kin-after-href]'),function(n){n.setAttribute('href',n.getAttribute('data-kin-after-href'));});"
+                  "[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')", 1)
+    assert "SALE_START_MS" in b and str(end) in b and "data-kin-after-href" in b
     return b
 
 
