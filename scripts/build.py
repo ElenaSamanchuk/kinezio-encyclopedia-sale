@@ -32,9 +32,21 @@ def client_card(b):
                     r'\1 data-kin-after="14 990 ₽">5 990 ₽\2', b)
     b, n2 = re.subn(r'(<p class="[^"]*")>(Если вы[^<]*поддержку)',
                     lambda m: f'{m.group(1)} data-kin-after="{m.group(2)}">{CLIENT_NOTE_NEW}', b)
-    b, n3 = re.subn(r'<a href="' + re.escape(SUPPORT) + r'"([^>]*)>Написать в\u00a0поддержку</a>',
-                    lambda m: f'<a data-kin-after="Написать в{NB}поддержку" data-kin-after-href="{SUPPORT}" '
-                              f'href="{CHECKOUT}"{m.group(1)}>Купить</a>', b)
+    # Кнопка «Купить» того же размера, что в соседней карточке; после акции класс возвращается
+    sizes = {"h-[59px] shrink-0 font-bold px-[16px] text-[14px] tracking-[-0.42px]":
+             "h-[59px] shrink-0 font-bold px-[60px] text-[16px] tracking-[-0.48px]",
+             "w-full px-[24px] py-[16px] font-bold text-[16px] leading-[19px] tracking-[-0.48px]":
+             "w-full px-[24px] py-[16px] font-bold text-[14px] leading-[17px] tracking-[-0.42px]"}
+
+    def buy(m):
+        cls = m.group(2)
+        sale_cls = cls
+        for a, z in sizes.items():
+            sale_cls = sale_cls.replace(a, z)
+        assert sale_cls != cls
+        return (f'<a data-kin-after="Написать в{NB}поддержку" data-kin-after-href="{SUPPORT}" '
+                f'data-kin-after-class="{cls}" href="{CHECKOUT}"{m.group(1)}class="{sale_cls}">Купить</a>')
+    b, n3 = re.subn(r'<a href="' + re.escape(SUPPORT) + r'"([^>]*?)class="([^"]*)">Написать в\u00a0поддержку</a>', buy, b)
     assert (n1, n2, n3) == (1, 1, 1), (n1, n2, n3)
     return b
 
@@ -59,7 +71,7 @@ def script(b, start=START_MS, end=END_MS):
                   "if(Date.now()>SALE_END_MS||Date.now()<SALE_START_MS)saleOver();")
     b = b.replace("else setTimeout(saleOver,", "else if(Date.now()<SALE_END_MS)setTimeout(saleOver,")
     b = b.replace("[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')",
-                  "[].forEach.call(wrap.querySelectorAll('[data-kin-after-href]'),function(n){n.setAttribute('href',n.getAttribute('data-kin-after-href'));});"
+                  "[].forEach.call(wrap.querySelectorAll('[data-kin-after-href]'),function(n){n.setAttribute('href',n.getAttribute('data-kin-after-href'));var c=n.getAttribute('data-kin-after-class');if(c)n.className=c;});"
                   "[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')", 1)
     assert "SALE_START_MS" in b and str(end) in b and "data-kin-after-href" in b
     return b
