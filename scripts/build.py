@@ -44,10 +44,10 @@ GATE = ("var SALE_START_MS={start};if(Date.now()<SALE_START_MS&&SALE_START_MS-Da
         "setTimeout(function(){{location.reload();}},SALE_START_MS-Date.now()+1000);}}")
 
 
-PASS_PARAMS = ("(function kinPass(){var q=new URLSearchParams(location.search),keep=[];"
+PASS_PARAMS = ("(function kinPass(){try{var q=new URLSearchParams(location.search),keep=[];"
                "['utm_source','utm_medium','utm_campaign','utm_content','utm_term','r'].forEach(function(k){var v=q.get(k);if(v)keep.push([k,v]);});"
                "if(!keep.length)return;[].forEach.call(wrap.querySelectorAll('a[href*=\"lk.kineziofitness.online/payments/\"]'),function(a){"
-               "var u=new URL(a.getAttribute('href'),location.href);keep.forEach(function(p){u.searchParams.set(p[0],p[1]);});a.setAttribute('href',u.toString());});})();")
+               "var u=new URL(a.getAttribute('href'),location.href);keep.forEach(function(p){u.searchParams.set(p[0],p[1]);});a.setAttribute('href',u.toString());});}catch(e){}})();")
 
 
 def script(b, start=START_MS, end=END_MS):
