@@ -19,35 +19,14 @@ kin = {n: b for b in blocks for n in "1345" if f"блок {n}/5" in b}
 assert set(kin) == set("1345"), kin.keys()
 
 
-CHECKOUT = "https://lk.kineziofitness.online/payments/tariff_nwn1gA/checkout"
-SUPPORT = "tg://resolve?domain=KINEZIOFITNESSCARE"
-NB = "\u00a0"
-CLIENT_NOTE_NEW = f"Если вы{NB}уже{NB}покупали продукты KINEZIO, цена 4{NB}990{NB}₽ применится при{NB}оплате автоматически"
 
 
 def client_card(b):
-    """Клиентам в акцию: зачёркнуто 5 990, кнопка «Купить» на ту же оплату.
-    После акции всё возвращается: зачёркнуто 14 990, «Написать в поддержку»."""
+    """Клиентам в акцию зачёркнуто 5 990, после акции снова 14 990."""
     b, n1 = re.subn(r'(<p class="[^"]*line-through decoration-solid")>14[\s\u00a0]990 ₽(</p><span[^>]*>Скидка для)',
                     r'\1 data-kin-after="14 990 ₽">5 990 ₽\2', b)
-    b, n2 = re.subn(r'(<p class="[^"]*")>(Если вы[^<]*поддержку)',
-                    lambda m: f'{m.group(1)} data-kin-after="{m.group(2)}">{CLIENT_NOTE_NEW}', b)
-    # Кнопка «Купить» того же размера, что в соседней карточке; после акции класс возвращается
-    sizes = {"h-[59px] shrink-0 font-bold px-[16px] text-[14px] tracking-[-0.42px]":
-             "h-[59px] shrink-0 font-bold px-[60px] text-[16px] tracking-[-0.48px]",
-             "w-full px-[24px] py-[16px] font-bold text-[16px] leading-[19px] tracking-[-0.48px]":
-             "w-full px-[24px] py-[16px] font-bold text-[14px] leading-[17px] tracking-[-0.42px]"}
-
-    def buy(m):
-        cls = m.group(2)
-        sale_cls = cls
-        for a, z in sizes.items():
-            sale_cls = sale_cls.replace(a, z)
-        assert sale_cls != cls
-        return (f'<a data-kin-after="Написать в{NB}поддержку" data-kin-after-href="{SUPPORT}" '
-                f'data-kin-after-class="{cls}" href="{CHECKOUT}"{m.group(1)}class="{sale_cls}">Купить</a>')
-    b, n3 = re.subn(r'<a href="' + re.escape(SUPPORT) + r'"([^>]*?)class="([^"]*)">Написать в\u00a0поддержку</a>', buy, b)
-    assert (n1, n2, n3) == (1, 1, 1), (n1, n2, n3)
+    # Кнопка «Написать в поддержку» и текст про почту остаются как были (решение Елены 29.10)
+    assert n1 == 1, n1
     return b
 
 
