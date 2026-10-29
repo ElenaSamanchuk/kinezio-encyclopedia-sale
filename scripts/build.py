@@ -44,6 +44,12 @@ GATE = ("var SALE_START_MS={start};if(Date.now()<SALE_START_MS&&SALE_START_MS-Da
         "setTimeout(function(){{location.reload();}},SALE_START_MS-Date.now()+1000);}}")
 
 
+PASS_PARAMS = ("(function kinPass(){var q=new URLSearchParams(location.search),keep=[];"
+               "['utm_source','utm_medium','utm_campaign','utm_content','utm_term','r'].forEach(function(k){var v=q.get(k);if(v)keep.push([k,v]);});"
+               "if(!keep.length)return;[].forEach.call(wrap.querySelectorAll('a[href*=\"lk.kineziofitness.online/payments/\"]'),function(a){"
+               "var u=new URL(a.getAttribute('href'),location.href);keep.forEach(function(p){u.searchParams.set(p[0],p[1]);});a.setAttribute('href',u.toString());});})();")
+
+
 def script(b, start=START_MS, end=END_MS):
     b = b.replace(f"var SALE_END_MS={OLD_END};", f"var SALE_END_MS={end};" + GATE.format(start=start))
     b = b.replace("if(Date.now()>SALE_END_MS)saleOver();",
@@ -52,7 +58,9 @@ def script(b, start=START_MS, end=END_MS):
     b = b.replace("[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')",
                   "[].forEach.call(wrap.querySelectorAll('[data-kin-after-href]'),function(n){n.setAttribute('href',n.getAttribute('data-kin-after-href'));var c=n.getAttribute('data-kin-after-class');if(c)n.className=c;});"
                   "[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')", 1)
-    assert "SALE_START_MS" in b and str(end) in b and "data-kin-after-href" in b
+    # Метки из адреса страницы (utm_* и r) переносятся в кнопки оплаты на платформе
+    b = b.replace("function init(wrap){", "function init(wrap){" + PASS_PARAMS, 1)
+    assert "SALE_START_MS" in b and str(end) in b and "data-kin-after-href" in b and "kinPass" in b
     return b
 
 
