@@ -10,7 +10,7 @@ SRC = ROOT / "source-live-2026-10-28.html"
 
 OLD_END = "1788469199000"            # 03.09.2026 23:59:59 МСК
 START_MS = 1793257200000             # 29.10.2026 10:00:00 МСК
-END_MS = 1793480399000               # 31.10.2026 23:59:59 МСК
+END_MS = 1793516400000               # 01.11.2026 10:00:00 МСК
 DATE_RE = re.compile(r"3([\s ])сентября")
 
 page = SRC.read_text(encoding="utf-8")
@@ -33,7 +33,8 @@ def client_card(b):
 def markup(b):
     b = client_card(b)
     b = b.replace(f'data-kin-countdown="{OLD_END}"', f'data-kin-countdown="{END_MS}"')
-    b = DATE_RE.sub(lambda m: f"31{m.group(1)}октября", b)
+    b = DATE_RE.sub(lambda m: f"1{m.group(1)}ноября, 10:00", b)
+    b = b.replace(" включительно", "")
     assert "сентябр" not in b
     return b
 
@@ -53,11 +54,12 @@ PASS_PARAMS = ("(function kinPass(){try{var q=new URLSearchParams(location.searc
 def script(b, start=START_MS, end=END_MS):
     b = b.replace(f"var SALE_END_MS={OLD_END};", f"var SALE_END_MS={end};" + GATE.format(start=start))
     b = b.replace("if(Date.now()>SALE_END_MS)saleOver();",
-                  "if(Date.now()>SALE_END_MS||Date.now()<SALE_START_MS)saleOver();")
+                  "if(Date.now()>=SALE_END_MS||Date.now()<SALE_START_MS)saleOver();")
     b = b.replace("else setTimeout(saleOver,", "else if(Date.now()<SALE_END_MS)setTimeout(saleOver,")
     b = b.replace("[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')",
                   "[].forEach.call(wrap.querySelectorAll('[data-kin-after-href]'),function(n){n.setAttribute('href',n.getAttribute('data-kin-after-href'));var c=n.getAttribute('data-kin-after-class');if(c)n.className=c;});"
                   "[].forEach.call(wrap.querySelectorAll('[data-kin-sale-only]')", 1)
+    b = b.replace("SALE_END_MS-Date.now()+1000", "SALE_END_MS-Date.now()")
     # Метки из адреса страницы (utm_* и r) переносятся в кнопки оплаты на платформе
     b = b.replace("function init(wrap){", "function init(wrap){" + PASS_PARAMS, 1)
     assert "SALE_START_MS" in b and str(end) in b and "data-kin-after-href" in b and "kinPass" in b
@@ -65,7 +67,7 @@ def script(b, start=START_MS, end=END_MS):
 
 
 new = {"1": kin["1"], "3": markup(kin["3"]), "4": markup(kin["4"]), "5": script(kin["5"])}
-stamp = "2026-10-28 · акция 29.10 10:00 – 31.10 23:59"
+stamp = "2026-10-30 · акция 29.10 10:00 – 01.11 10:00 МСК"
 names = {"1": "блок-1-стили", "3": "блок-3-разметка-1440", "4": "блок-4-разметка-430", "5": "блок-5-скрипт"}
 for n, body in new.items():
     body = body.replace("· 2026-09-08 -->", f"· {stamp} -->")
@@ -102,9 +104,9 @@ def build(kind):
     p = p.replace(kin["5"], s)
     p = strip_tracking(p)
     banner = {
-        "sale": "Превью: скидка идёт, таймер до 31.10 23:59",
+        "sale": "Превью: скидка идёт, таймер до 01.11 10:00 МСК",
         "switch": "Превью: таймер 60 секунд, затем страница сама переключится",
-        "after": "Превью: акция закончилась (так будет с 01.11)",
+        "after": "Превью: акция закончилась (так будет с 01.11 10:00 МСК)",
         "before": "Превью: до старта акции (сегодня и завтра до 10:00)",
     }[kind]
     bar = ('<div style="position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#14161a;color:#fff;'
